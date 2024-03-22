@@ -1,128 +1,215 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
-/* run this program using the console pauser or add your own getch, system("pause") or input loop */
+#define MAX_SIZE 100
+int main(){
 
-int main(int argc, char *argv[]) {
-	char c[1000];
-	char fileName[100];
-	int result;
-	int menu_option;
- 	printf("        FILE INTERACTION!!!\n");
-    printf("------------------------------------------\n\n");
+    int choice;
 
-    do{
-    	printf("\nMain Menu\n");
-    	printf("1. Create a file.\n");
-    	printf("2. Add value into a file.\n");
-   		printf("3 Read data from file.\n");
-    	printf("4. Delete file\n");
-    	printf("5. Save and quit.\n");
-    	printf(" Please enter an option from the main menu: ");
-    	scanf("%d",&menu_option);
+    
+    loadStudentsFromFile("students.txt");
 
-    	switch(menu_option){
-    	case 1:
-        	result = createFile();
-        	break;
-    	case 2:
-        	result =  AddValueToFile();
-        	break;
-    	case 3:
-        	result = ReadValueFromFile();
-        	break;
-    	case 4:
-    	  	result = RemoveFile();
-        	break;
-    	case 5:
-    		printf("Option exit");
-        	break;
-        default: 
-        	printf("Error");
-    	}
-    }	while(menu_option != 5);
+do {
+    printf("\n========================\n");
+    printf("QUAN LY DANH SACH SINH VIEN\n");
+    printf("========================\n");
+    printf("1. Them hoc sinh\n");
+    printf("2. Sap xep danh sach theo diem\n");
+    printf("3. In danh sach\n");
+    printf("4. Tim kiem hoc sinh\n");
+    printf("5. Xoa hoc sinh\n");
+    printf("6. Luu danh sach vao file\n");
+    printf("0. Thoat\n");
+    printf("Nhap lua chon cua ban: ");
+    scanf("%d", &choice);
+    getchar();  // Xóa ký tự xuống dòng sau khi đọc lựa chọn
+
+    switch (choice) {
+        case 1:
+            addStudent();
+            break;
+        case 2:
+            sortStudentsByScore();
+            break;
+        case 3:
+            printStudents();
+            break;
+        case 4:
+            searchStudent();
+            break;
+        case 5:
+            deleteStudent();
+            break;
+        case 6:
+            saveStudentsToFile("students.txt");
+            printf("Da luu danh sach vao file.\n");
+            break;
+        case 0:
+            printf("Tam biet!\n");
+            break;
+        default:
+            printf("Lua chon khong hop le.\n");
+            break;
+    }
+} while (choice != 0);
+
+    return 0;
 }
-// create file func
-int createFile() {
-	FILE *file;
-	char fileName[100];
-	printf("Enter a fileName: ");
-	scanf("%s", &fileName);
-	if((file = fopen(fileName, "w")) == NULL) {
-		printf("Cannot create a file");
-		return 0;
-	}
-	printf("Create file successfully\n");
-	printf("----------------------------\n");
-	fclose(file);
-	return 1;
-}
-// write to file func
-int AddValueToFile() {
-	FILE *file;
-	char fileName[100];
-	char content[100];
-	printf("Enter a fileName: ");
-	scanf("%s", &fileName);
-	if((file = fopen(fileName, "r")) == NULL) {
-		printf("Cannot open %c file to write", fileName);
-		return 0;
-	} else {
-		file = fopen(fileName, "a");
-		printf("Enter content to append to the file:\n");
-    	scanf(" %[^\n]", content);
+struct Student {
+    char name[50];
+    float score;
+   
+};
 
-    	// Write content to the file
-    	fprintf(file, "%s\n", content);
-	}
-	fclose(file);
-	printf("Add vlaue into file successfully\n");
-	printf("----------------------------\n");
+struct Student studentList[MAX_SIZE];
+int studentCount = 0;
 
-	return 1;
+void loadStudentsFromFile(const char* filename) {
+    FILE* file = fopen(filename, "r");
+    if (file == NULL) {
+        printf("Khong the mo file.\n");
+        return;
+    }
+
+    char line[50];
+    while (fgets(line, sizeof(line), file)) {
+        line[strcspn(line, "\n")] = '\0';  //x�a ki tu xuong dong 
+        strcpy(studentList[studentCount].name, strtok(line, ","));
+        studentList[studentCount].score = atof(strtok(NULL, ","));
+        studentCount++;
+    }
+
+    fclose(file);
 }
 
-// read file func
-int ReadValueFromFile() {
-	FILE *file;
-	char fileName[100];
-	char line[100];
+void saveStudentsToFile(const char* filename)
+ {int i,j;
+    FILE* file = fopen(filename, "w");
+    if (file == NULL)
+	
+	 {
+        printf("Khong the mo file.\n");
+        return;
+    }
+    for (i = 0; i < studentCount; i++) {
+        fprintf(file, "%s,%.2f\n", studentList[i].name, studentList[i].score);
+    }
 
-	printf("Enter a fileName: ");
-	scanf("%s", &fileName);
-	if((file = fopen(fileName, "r")) == NULL) {
-		printf("Cannot open %s file for reading\n", fileName);
-		return 0;
-	} else {
-		printf("\n----------------------------------\n");
-		printf("Contents of the file %s:\n", fileName);
-    	while (fgets(line, sizeof(line), file) != NULL) {
-        	printf("%s", line);
-    	}
-    	printf("\n----------------------------------\n");
-	}
-	fclose(file);
-	printf("Read vlaue from %s file successfully\n", fileName);
-	printf("----------------------------\n");
-
-	return 1;
+    fclose(file);
 }
-// delete file func
-int RemoveFile() {
-	FILE *file;
-	char fileName[100];
 
-	printf("Enter a fileName: ");
-	scanf("%s", &fileName);
-	printf("\n----------------------------------\n");
-	if (remove(fileName) == 0) {
-        	printf("File %s removed successfully.\n", fileName);
-    	} else {
-        printf("Unable to remove the file %s.\n", fileName);
-        	return 0;
-    	}
-		printf("\n----------------------------------\n");
-	printf("----------------------------\n");
-	return 1;
+void addStudent() {
+    if (studentCount == MAX_SIZE) {
+        printf("Danh sach da day.\n");
+        return;
+    }
+
+    printf("Nhap ten hoc sinh: ");
+    char name[50];
+    fgets(name, sizeof(name), stdin);
+    name[strcspn(name, "\n")] = '\0';  // Xóa ký tự xuống dòng
+
+    printf("Nhap diem hoc sinh: ");
+    float score;
+    scanf("%f", &score);
+    getchar();  // Xóa ký tự xuống dòng
+
+    strcpy(studentList[studentCount].name, name);
+    studentList[studentCount].score = score;
+    studentCount++;
+
+    printf("Da them hoc sinh.\n");
 }
+
+void sortStudentsByScore() {
+	int i,j;
+    if (studentCount == 0) {
+        printf("Danh sach rong.\n");
+        return;
+    }
+
+    // Sắp xếp danh sách sinh viên theo điểm tăng dần
+    for (i = 0; i < studentCount - 1; i++) {
+        for (j = i + 1; j < studentCount; j++) {
+            if (studentList[i].score > studentList[j].score) {
+                struct Student temp = studentList[i];
+                studentList[i] = studentList[j];
+                studentList[j] = temp;
+            }
+        }
+    }
+
+    printf("Danh sach da sap xep theo diem.\n");
+}
+
+void printStudents() {
+	int i,j;
+    if (studentCount == 0) {
+        printf("Danh sach rong.\n");
+        return;
+    }
+
+    printf("Danh sach hoc sinh:\n");
+    for ( i = 0; i < studentCount; i++) {
+        printf("Ten: %s - Diem: %.2f\n", studentList[i].name, studentList[i].score);
+    }
+}
+
+void searchStudent() {int i,j;
+    if (studentCount == 0) {
+        printf("Danh sach rong.\n");
+        return;
+    }
+
+    printf("Nhap ten hoc sinh can tim: ");
+    char name[50];
+    fgets(name, sizeof(name), stdin);
+    name[strcspn(name, "\n")] = '\0';  // Xóa ký tự xuống dòng
+
+    int found = 0;
+    for ( i = 0; i < studentCount; i++) {
+        if (strcmp(studentList[i].name, name) == 0) {
+            found = 1;
+            printf("Thong tin hoc sinh:\n");
+            printf("Ten: %s - Diem: %.2f\n", studentList[i].name, studentList[i].score);
+            break;
+        }
+    }
+
+    if (!found) {
+        printf("Khong tim thay hoc sinh.\n");
+    }
+}
+
+void deleteStudent() {int i,j;
+    if (studentCount == 0) {
+        printf("Danh sach rong.\n");
+        return;
+    }
+
+    printf("Nhap ten hoc sinh can xoa: ");
+    char name[50];
+    fgets(name, sizeof(name), stdin);
+    name[strcspn(name, "\n")] = '\0';  // Xóa ký tự xuống dòng
+
+    int found = 0;
+    for ( i = 0; i < studentCount; i++) {
+        if (strcmp(studentList[i].name, name) == 0) {
+            found = 1;
+            
+            for (j = i; j < studentCount - 1; j++) {
+                studentList[j] = studentList[j + 1];
+            }
+            studentCount--;
+            printf("Da xoa hoc sinh.\n");
+            break;
+        }
+    }
+
+    if (!found) {
+        printf("Khong tim thay hoc sinh.\n")    ;
+    }
+}
+
 
